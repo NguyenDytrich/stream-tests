@@ -6,6 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+log = "0.4.17"
 rocket = "0.5.0-rc.2"
 rodio = "0.15.0"
 tokio = "1.8.0"

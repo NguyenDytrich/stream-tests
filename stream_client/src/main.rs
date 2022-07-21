@@ -1,6 +1,5 @@
-use std::thread::sleep;
+use std::mem;
 use std::time::{Duration, Instant};
-use std::collections::VecDeque;
 
 use futures_util::stream::StreamExt;
 use rodio::{OutputStream, Sink};
@@ -9,7 +8,6 @@ use rodio::source::Source;
 struct ByteSource {
     pub sample_rate: u32,
     pub channels: u16,
-    pub total_duration: Option<Duration>,
     pub data: Vec<u8>,
 }
 
@@ -75,7 +73,8 @@ async fn main() {
     let (_stream, stream_handle) = OutputStream::try_default().unwrap();
     let sink = Sink::try_new(&stream_handle).unwrap();
 
-    let mut stream = reqwest::get("http://localhost:8000/audio-file/stream").await.unwrap().bytes_stream();
+    // let mut stream = reqwest::get("http://localhost:8000/audio-file/decode-test").await.unwrap().bytes_stream();
+    let mut stream = reqwest::get("http://localhost:8000/sine").await.unwrap().bytes_stream();
     let mut frames: Vec<u8> = Vec::new();
     let mut total_frames = 0;
 
@@ -92,16 +91,15 @@ async fn main() {
             let mut sample = ByteSource{
                 channels: 2, 
                 sample_rate: 44100,
-                data: frames.clone(),
-                total_duration: None
+                data: mem::take(&mut frames),
             };
 
+            // TODO:: Enqueue instead of append
             sample.data.reverse();
             // sink.append(sample);
             sink.append(sample);
 
             total_frames += 1;
-            frames = Vec::new();
 
             println!("Loaded 44.1k frame in {:?}", start.elapsed());
             println!("Total samples in sink {:?}", sink.len());
@@ -121,7 +119,6 @@ async fn main() {
             channels: 1,
             sample_rate: 44100,
             data: frames.clone(),
-            total_duration: None
         };
 
         sample.data.reverse();
